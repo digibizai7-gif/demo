@@ -1,0 +1,923 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>My Earning App</title>
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #0a0a0f;
+  --surface: #12121a;
+  --card: #1a1a28;
+  --border: #2a2a40;
+  --accent: #00ff88;
+  --accent2: #ff6b35;
+  --accent3: #7c5cfc;
+  --text: #f0f0ff;
+  --muted: #6b6b8a;
+  --gold: #ffd700;
+  --silver: #c0c0c0;
+  --bronze: #cd7f32;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'Syne', sans-serif;
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+body::before {
+  content: '';
+  position: fixed; inset: 0;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");
+  pointer-events: none; z-index: 0;
+}
+
+body::after {
+  content: '';
+  position: fixed; inset: 0;
+  background-image:
+    linear-gradient(rgba(0,255,136,0.03) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(0,255,136,0.03) 1px, transparent 1px);
+  background-size: 40px 40px;
+  pointer-events: none; z-index: 0;
+}
+
+.app {
+  position: relative; z-index: 1;
+  max-width: 420px;
+  margin: 0 auto;
+  padding: 0 0 90px;
+}
+
+/* ── HEADER ── */
+.header {
+  padding: 20px 20px 0;
+  display: flex; justify-content: space-between; align-items: center;
+  animation: slideDown 0.5s ease;
+}
+
+.logo { display: flex; align-items: center; gap: 8px; }
+.logo-icon {
+  width: 36px; height: 36px;
+  background: linear-gradient(135deg, var(--accent), var(--accent3));
+  border-radius: 10px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 18px;
+}
+.logo-text {
+  font-size: 20px; font-weight: 800;
+  background: linear-gradient(90deg, var(--accent), var(--accent3));
+  -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+}
+
+.header-right { display: flex; gap: 8px; }
+
+.icon-btn {
+  width: 38px; height: 38px;
+  background: var(--card); border: 1px solid var(--border);
+  border-radius: 10px;
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer; font-size: 18px; position: relative;
+  transition: transform 0.2s;
+}
+.icon-btn:active { transform: scale(0.9); }
+.notif-dot {
+  position: absolute; top: 6px; right: 6px;
+  width: 8px; height: 8px;
+  background: var(--accent2); border-radius: 50%; border: 2px solid var(--bg);
+}
+
+/* ── LEVEL BANNER ── */
+.level-banner {
+  margin: 16px 16px 0;
+  background: linear-gradient(135deg, rgba(124,92,252,0.2), rgba(0,255,136,0.08));
+  border: 1px solid rgba(124,92,252,0.3);
+  border-radius: 18px;
+  padding: 14px 16px;
+  display: flex; align-items: center; gap: 14px;
+  animation: slideUp 0.5s ease 0.05s both;
+}
+
+.level-avatar {
+  width: 52px; height: 52px;
+  background: linear-gradient(135deg, var(--accent3), var(--accent));
+  border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 24px; flex-shrink: 0;
+  box-shadow: 0 0 20px rgba(124,92,252,0.4);
+}
+
+.level-info { flex: 1; }
+.level-name { font-size: 16px; font-weight: 700; }
+.level-rank {
+  font-size: 11px; color: var(--accent3);
+  font-family: 'Space Mono', monospace;
+  margin-top: 2px;
+}
+
+.level-xp-wrap { margin-top: 8px; }
+.level-xp-label {
+  display: flex; justify-content: space-between;
+  font-size: 11px; color: var(--muted);
+  font-family: 'Space Mono', monospace;
+  margin-bottom: 5px;
+}
+.level-xp-bar {
+  height: 5px; background: var(--border); border-radius: 3px; overflow: hidden;
+}
+.level-xp-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--accent3), var(--accent));
+  border-radius: 3px;
+  transition: width 1.2s cubic-bezier(0.34,1.56,0.64,1);
+}
+
+.level-badge {
+  background: linear-gradient(135deg, var(--gold), var(--accent2));
+  color: #0a0a0f;
+  font-size: 11px; font-weight: 700;
+  font-family: 'Space Mono', monospace;
+  padding: 4px 10px; border-radius: 20px;
+  white-space: nowrap;
+}
+
+/* ── BALANCE CARD ── */
+.balance-section {
+  margin: 14px 16px 0;
+  animation: slideUp 0.5s ease 0.1s both;
+}
+
+.balance-card {
+  background: linear-gradient(135deg, #1a1a30, #12122a);
+  border: 1px solid rgba(0,255,136,0.15);
+  border-radius: 24px; padding: 22px;
+  position: relative; overflow: hidden;
+}
+.balance-card::before {
+  content: ''; position: absolute; top: -60px; right: -60px;
+  width: 200px; height: 200px;
+  background: radial-gradient(circle, rgba(0,255,136,0.12), transparent 70%);
+  pointer-events: none;
+}
+
+.balance-label { font-size: 12px; color: var(--muted); letter-spacing: 2px; text-transform: uppercase; font-family: 'Space Mono', monospace; }
+.balance-amount {
+  font-size: 44px; font-weight: 800; line-height: 1; margin: 6px 0 4px;
+  background: linear-gradient(90deg, #fff, var(--accent));
+  -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+}
+.balance-currency { font-size: 14px; color: var(--muted); font-family: 'Space Mono', monospace; }
+
+.balance-stats { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 16px; }
+.stat-item { background: rgba(255,255,255,0.04); border-radius: 12px; padding: 11px; }
+.stat-label { font-size: 11px; color: var(--muted); font-family: 'Space Mono', monospace; }
+.stat-value { font-size: 17px; font-weight: 700; margin-top: 3px; color: var(--accent); }
+.stat-value.orange { color: var(--accent2); }
+
+.withdraw-btn {
+  width: 100%; margin-top: 14px; padding: 13px;
+  background: var(--accent); color: #0a0a0f;
+  border: none; border-radius: 14px;
+  font-family: 'Syne', sans-serif; font-size: 15px; font-weight: 700;
+  cursor: pointer; transition: all 0.2s; position: relative; overflow: hidden;
+}
+.withdraw-btn:active { transform: scale(0.97); }
+
+/* ── TABS ── */
+.tabs {
+  display: flex; gap: 8px;
+  padding: 20px 16px 0;
+  animation: slideUp 0.5s ease 0.15s both;
+}
+
+.tab {
+  flex: 1; padding: 10px 4px;
+  background: var(--card); border: 1px solid var(--border);
+  border-radius: 12px;
+  font-size: 12px; font-weight: 700;
+  text-align: center; cursor: pointer;
+  color: var(--muted); transition: all 0.2s;
+  font-family: 'Space Mono', monospace;
+}
+.tab.active {
+  background: rgba(0,255,136,0.1);
+  border-color: rgba(0,255,136,0.3);
+  color: var(--accent);
+}
+.tab:active { transform: scale(0.95); }
+
+/* ── PANELS ── */
+.panel { display: none; animation: fadeIn 0.3s ease; }
+.panel.active { display: block; }
+
+@keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+
+/* ── SECTION TITLE ── */
+.section-title {
+  font-size: 17px; font-weight: 700;
+  padding: 0 20px; margin-top: 22px; margin-bottom: 12px;
+  display: flex; align-items: center; justify-content: space-between;
+}
+.section-title span { color: var(--muted); font-size: 13px; font-weight: 400; cursor: pointer; }
+
+/* ── AD TASKS ── */
+.tasks-list { padding: 0 16px; display: flex; flex-direction: column; gap: 10px; }
+
+.task-card {
+  background: var(--card); border: 1px solid var(--border);
+  border-radius: 16px; padding: 15px;
+  display: flex; align-items: center; gap: 12px;
+  cursor: pointer; transition: all 0.2s; position: relative; overflow: hidden;
+}
+.task-card::before {
+  content: ''; position: absolute; left: 0; top: 0; bottom: 0;
+  width: 3px; background: var(--accent); border-radius: 0 2px 2px 0;
+  opacity: 0; transition: opacity 0.2s;
+}
+.task-card:active { transform: scale(0.98); }
+.task-card:hover::before { opacity: 1; }
+.task-card.completed { opacity: 0.5; }
+.task-card.completed::before { background: var(--muted); opacity: 1; }
+
+.task-icon { width: 46px; height: 46px; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 22px; flex-shrink: 0; }
+.task-info { flex: 1; min-width: 0; }
+.task-name { font-size: 14px; font-weight: 600; }
+.task-desc { font-size: 11px; color: var(--muted); margin-top: 2px; font-family: 'Space Mono', monospace; }
+.task-badge { font-size: 10px; padding: 2px 7px; border-radius: 20px; font-family: 'Space Mono', monospace; display: inline-block; margin-top: 4px; font-weight: 700; }
+.badge-hot { background: rgba(255,107,53,0.15); color: var(--accent2); border: 1px solid rgba(255,107,53,0.3); }
+.badge-new { background: rgba(0,255,136,0.1); color: var(--accent); border: 1px solid rgba(0,255,136,0.25); }
+.badge-done { background: rgba(107,107,138,0.15); color: var(--muted); border: 1px solid var(--border); }
+.task-reward { font-size: 15px; font-weight: 700; color: var(--gold); flex-shrink: 0; font-family: 'Space Mono', monospace; text-align: right; }
+.task-reward .per { font-size: 10px; color: var(--muted); display: block; }
+
+/* ── MYSTERY BOX ── */
+.mystery-section { padding: 0 16px; }
+
+.mystery-card {
+  background: linear-gradient(135deg, #1a1228, #201428);
+  border: 1px solid rgba(255,215,0,0.2);
+  border-radius: 24px; padding: 24px;
+  text-align: center; position: relative; overflow: hidden;
+}
+.mystery-card::before {
+  content: ''; position: absolute; top: -80px; left: 50%; transform: translateX(-50%);
+  width: 250px; height: 250px;
+  background: radial-gradient(circle, rgba(255,215,0,0.08), transparent 70%);
+  pointer-events: none;
+}
+
+.mystery-title { font-size: 20px; font-weight: 800; margin-bottom: 4px; }
+.mystery-sub { font-size: 12px; color: var(--muted); font-family: 'Space Mono', monospace; margin-bottom: 20px; }
+
+.streak-row {
+  display: flex; justify-content: center; gap: 6px; margin-bottom: 20px;
+}
+.streak-day {
+  width: 36px; height: 36px; border-radius: 10px;
+  background: var(--border); border: 1px solid var(--border);
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  font-size: 9px; color: var(--muted); font-family: 'Space Mono', monospace;
+  transition: all 0.3s;
+}
+.streak-day.claimed {
+  background: rgba(255,215,0,0.15);
+  border-color: rgba(255,215,0,0.4);
+  color: var(--gold);
+}
+.streak-day.today {
+  background: rgba(255,215,0,0.25);
+  border-color: var(--gold);
+  color: var(--gold);
+  box-shadow: 0 0 12px rgba(255,215,0,0.3);
+  transform: scale(1.1);
+}
+.streak-day-num { font-size: 13px; font-weight: 700; }
+
+/* Box scratch area */
+.boxes-grid {
+  display: grid; grid-template-columns: repeat(3, 1fr);
+  gap: 10px; margin-bottom: 18px;
+}
+
+.mystery-box {
+  aspect-ratio: 1;
+  background: linear-gradient(135deg, #2a1a3a, #1e1230);
+  border: 2px solid rgba(255,215,0,0.25);
+  border-radius: 16px;
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  cursor: pointer; font-size: 30px;
+  position: relative; overflow: hidden;
+  transition: all 0.3s;
+}
+.mystery-box:not(.opened):not(.revealed)::after {
+  content: '🎁';
+  font-size: 28px;
+}
+.mystery-box:not(.opened):not(.revealed) .box-content { display: none; }
+.mystery-box.opened { pointer-events: none; animation: boxPop 0.4s cubic-bezier(0.34,1.56,0.64,1); }
+.mystery-box.opened { background: rgba(0,255,136,0.08); border-color: rgba(0,255,136,0.4); }
+.mystery-box.opened.bomb { background: rgba(255,107,53,0.08); border-color: rgba(255,107,53,0.35); }
+
+.box-reward { font-size: 22px; }
+.box-amount { font-size: 13px; font-weight: 700; color: var(--gold); font-family: 'Space Mono', monospace; margin-top: 2px; }
+.box-amount.bad { color: var(--accent2); }
+
+.mystery-status {
+  font-size: 14px; color: var(--muted);
+  font-family: 'Space Mono', monospace;
+  min-height: 20px; margin-bottom: 14px;
+}
+
+.scratch-btn {
+  width: 100%; padding: 14px;
+  background: linear-gradient(90deg, var(--gold), var(--accent2));
+  color: #0a0a0f; border: none; border-radius: 14px;
+  font-family: 'Syne', sans-serif; font-size: 16px; font-weight: 700;
+  cursor: pointer; transition: all 0.2s;
+}
+.scratch-btn:active { transform: scale(0.97); }
+.scratch-btn:disabled { opacity: 0.4; cursor: not-allowed; transform: none; }
+
+.next-reset {
+  font-size: 11px; color: var(--muted);
+  font-family: 'Space Mono', monospace;
+  margin-top: 10px;
+}
+
+@keyframes boxPop {
+  0% { transform: scale(0.8); opacity: 0; }
+  70% { transform: scale(1.1); }
+  100% { transform: scale(1); opacity: 1; }
+}
+
+/* ── LEADERBOARD ── */
+.leaderboard-section { padding: 0 16px; }
+
+.your-rank-card {
+  background: linear-gradient(135deg, rgba(124,92,252,0.15), rgba(0,255,136,0.08));
+  border: 1px solid rgba(124,92,252,0.3);
+  border-radius: 16px; padding: 16px;
+  display: flex; align-items: center; gap: 14px;
+  margin-bottom: 16px;
+}
+.your-rank-num {
+  font-size: 28px; font-weight: 800;
+  color: var(--accent3); font-family: 'Space Mono', monospace;
+  min-width: 40px; text-align: center;
+}
+.your-rank-info { flex: 1; }
+.your-rank-name { font-size: 15px; font-weight: 700; }
+.your-rank-sub { font-size: 12px; color: var(--muted); font-family: 'Space Mono', monospace; }
+.your-rank-earn { font-size: 17px; font-weight: 700; color: var(--gold); font-family: 'Space Mono', monospace; }
+
+.lb-list { display: flex; flex-direction: column; gap: 8px; }
+
+.lb-item {
+  background: var(--card); border: 1px solid var(--border);
+  border-radius: 14px; padding: 13px 14px;
+  display: flex; align-items: center; gap: 12px;
+  transition: all 0.2s;
+}
+.lb-item:nth-child(1) { border-color: rgba(255,215,0,0.3); background: rgba(255,215,0,0.05); }
+.lb-item:nth-child(2) { border-color: rgba(192,192,192,0.3); background: rgba(192,192,192,0.04); }
+.lb-item:nth-child(3) { border-color: rgba(205,127,50,0.3); background: rgba(205,127,50,0.04); }
+
+.lb-rank { font-size: 14px; font-weight: 800; min-width: 26px; font-family: 'Space Mono', monospace; text-align: center; }
+.lb-avatar { width: 36px; height: 36px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 18px; flex-shrink: 0; }
+.lb-name { flex: 1; font-size: 14px; font-weight: 600; }
+.lb-level { font-size: 10px; color: var(--muted); font-family: 'Space Mono', monospace; }
+.lb-earn { font-size: 14px; font-weight: 700; color: var(--gold); font-family: 'Space Mono', monospace; }
+
+.medal-1 { color: var(--gold); }
+.medal-2 { color: var(--silver); }
+.medal-3 { color: var(--bronze); }
+
+/* ── REFERRAL ── */
+.referral-card {
+  margin: 0 16px;
+  background: linear-gradient(135deg, rgba(124,92,252,0.15), rgba(255,107,53,0.1));
+  border: 1px solid rgba(124,92,252,0.25);
+  border-radius: 20px; padding: 18px;
+}
+.referral-title { font-size: 16px; font-weight: 700; margin-bottom: 5px; }
+.referral-desc { font-size: 12px; color: var(--muted); line-height: 1.5; font-family: 'Space Mono', monospace; }
+.referral-stats { display: flex; gap: 10px; margin: 14px 0; }
+.ref-stat { flex: 1; background: rgba(0,0,0,0.3); border-radius: 10px; padding: 10px; text-align: center; }
+.ref-stat-val { font-size: 20px; font-weight: 800; color: var(--accent3); }
+.ref-stat-label { font-size: 10px; color: var(--muted); font-family: 'Space Mono', monospace; margin-top: 2px; }
+.invite-btn {
+  width: 100%; padding: 12px;
+  background: var(--accent3); color: white;
+  border: none; border-radius: 12px;
+  font-family: 'Syne', sans-serif; font-size: 14px; font-weight: 700;
+  cursor: pointer; transition: all 0.2s;
+}
+.invite-btn:active { transform: scale(0.97); }
+
+/* ── BOTTOM NAV ── */
+.bottom-nav {
+  position: fixed; bottom: 0; left: 0; right: 0;
+  background: rgba(10,10,15,0.95);
+  backdrop-filter: blur(20px);
+  border-top: 1px solid var(--border);
+  display: flex; z-index: 100;
+  max-width: 420px; margin: 0 auto;
+}
+.nav-item {
+  flex: 1; padding: 10px 0 14px;
+  display: flex; flex-direction: column; align-items: center; gap: 3px;
+  cursor: pointer; transition: all 0.2s;
+  color: var(--muted); font-size: 10px;
+  font-family: 'Space Mono', monospace;
+}
+.nav-item.active { color: var(--accent); }
+.nav-item:active { transform: scale(0.9); }
+.nav-icon { font-size: 20px; transition: transform 0.2s; }
+.nav-item.active .nav-icon { transform: scale(1.15); }
+
+/* ── TOAST ── */
+.toast {
+  position: fixed; top: 20px; left: 50%;
+  transform: translateX(-50%) translateY(-80px);
+  background: var(--card); border: 1px solid var(--accent);
+  color: var(--text); padding: 11px 20px;
+  border-radius: 12px; font-family: 'Space Mono', monospace; font-size: 13px;
+  z-index: 1000; transition: transform 0.3s cubic-bezier(0.34,1.56,0.64,1);
+  white-space: nowrap;
+}
+.toast.show { transform: translateX(-50%) translateY(0); }
+
+/* ── LIVE INDICATOR ── */
+.live-indicator {
+  display: inline-flex; align-items: center; gap: 5px;
+  background: rgba(0,255,136,0.1); border: 1px solid rgba(0,255,136,0.2);
+  border-radius: 20px; padding: 3px 10px;
+  font-size: 11px; font-family: 'Space Mono', monospace; color: var(--accent);
+  margin-bottom: 10px;
+}
+.live-dot { width: 6px; height: 6px; background: var(--accent); border-radius: 50%; animation: pulse 1.5s infinite; }
+
+/* ── ANIMATIONS ── */
+@keyframes slideDown { from { opacity:0; transform:translateY(-20px); } to { opacity:1; transform:translateY(0); } }
+@keyframes slideUp { from { opacity:0; transform:translateY(20px); } to { opacity:1; transform:translateY(0); } }
+@keyframes pulse { 0%,100% { opacity:1; } 50% { opacity:0.4; } }
+@keyframes shine {
+  0% { background-position: -200% center; }
+  100% { background-position: 200% center; }
+}
+
+.box-content { display: flex; flex-direction: column; align-items: center; }
+</style>
+</head>
+<body>
+<div class="app">
+
+  <!-- Header -->
+  <div class="header">
+    <div class="logo">
+      <div class="logo-icon">📡</div>
+      <div class="logo-text">My Earning App</div>
+    </div>
+    <div class="header-right">
+      <div class="icon-btn" onclick="showToast('🔔 No new notifications')">
+        🔔<div class="notif-dot"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Level Banner -->
+  <div class="level-banner">
+    <div class="level-avatar" id="levelAvatar">🥈</div>
+    <div class="level-info">
+      <div class="level-name" id="userName">You</div>
+      <div class="level-rank" id="userRank">SILVER EARNER · LVL 4</div>
+      <div class="level-xp-wrap">
+        <div class="level-xp-label">
+          <span>XP Progress</span>
+          <span id="xpLabel">340 / 500 XP</span>
+        </div>
+        <div class="level-xp-bar">
+          <div class="level-xp-fill" id="xpFill" style="width: 68%;"></div>
+        </div>
+      </div>
+    </div>
+    <div class="level-badge" id="levelBadge">LVL 4</div>
+  </div>
+
+  <!-- Balance Card -->
+  <div class="balance-section">
+    <div class="balance-card">
+      <div class="live-indicator"><div class="live-dot"></div>LIVE EARNINGS</div>
+      <div class="balance-label">Total Balance</div>
+      <div class="balance-amount" id="balance">$12.847</div>
+      <div class="balance-currency">USD · Monitag Ads Revenue</div>
+      <div class="balance-stats">
+        <div class="stat-item">
+          <div class="stat-label">Today</div>
+          <div class="stat-value" id="today">+$0.342</div>
+        </div>
+        <div class="stat-item">
+          <div class="stat-label">This Week</div>
+          <div class="stat-value orange">+$2.18</div>
+        </div>
+      </div>
+      <button class="withdraw-btn" onclick="showToast('💸 Minimum $99 required. Almost there!')">
+        Withdraw via TON / USDT
+      </button>
+    </div>
+  </div>
+
+  <!-- Tabs -->
+  <div class="tabs">
+    <div class="tab active" onclick="switchTab('tasks', this)">📋 TASKS</div>
+    <div class="tab" onclick="switchTab('bonus', this)">🎁 BONUS</div>
+    <div class="tab" onclick="switchTab('leaderboard', this)">🏆 RANKS</div>
+  </div>
+
+  <!-- ── TASKS PANEL ── -->
+  <div class="panel active" id="panel-tasks">
+    <div class="section-title">
+      Ad Tasks
+      <span onclick="showToast('🔄 Refreshed!')">Refresh ↻</span>
+    </div>
+    <div class="tasks-list">
+      <div class="task-card" onclick="claimTask(this, 0.025, 30)">
+        <div class="task-icon" style="background:rgba(255,107,53,0.15);">📺</div>
+        <div class="task-info">
+          <div class="task-name">Watch Video Ad</div>
+          <div class="task-desc">30 sec · Monitag Display</div>
+          <span class="task-badge badge-hot">🔥 HOT</span>
+        </div>
+        <div class="task-reward">+$0.025<span class="per">per view</span></div>
+      </div>
+      <div class="task-card" onclick="claimTask(this, 0.012, 15)">
+        <div class="task-icon" style="background:rgba(0,255,136,0.1);">🖱️</div>
+        <div class="task-info">
+          <div class="task-name">Banner Click Task</div>
+          <div class="task-desc">1 click · Any device</div>
+          <span class="task-badge badge-new">✨ NEW</span>
+        </div>
+        <div class="task-reward">+$0.012<span class="per">per click</span></div>
+      </div>
+      <div class="task-card" onclick="claimTask(this, 0.045, 50)">
+        <div class="task-icon" style="background:rgba(124,92,252,0.15);">📱</div>
+        <div class="task-info">
+          <div class="task-name">App Install Offer</div>
+          <div class="task-desc">Install & open · Premium</div>
+          <span class="task-badge badge-hot">💎 PREMIUM</span>
+        </div>
+        <div class="task-reward">+$0.045<span class="per">per install</span></div>
+      </div>
+      <div class="task-card" onclick="claimTask(this, 0.008, 10)">
+        <div class="task-icon" style="background:rgba(255,215,0,0.1);">📊</div>
+        <div class="task-info">
+          <div class="task-name">Survey Ad Task</div>
+          <div class="task-desc">2 min · Quick survey</div>
+          <span class="task-badge badge-new">📝 SURVEY</span>
+        </div>
+        <div class="task-reward">+$0.008<span class="per">per answer</span></div>
+      </div>
+      <div class="task-card" onclick="claimTask(this, 0.018, 20)">
+        <div class="task-icon" style="background:rgba(0,255,136,0.08);">🎮</div>
+        <div class="task-info">
+          <div class="task-name">Play Mini Game</div>
+          <div class="task-desc">60 sec · Fun & earn</div>
+          <span class="task-badge badge-new">🕹️ GAME</span>
+        </div>
+        <div class="task-reward">+$0.018<span class="per">per play</span></div>
+      </div>
+    </div>
+
+    <div class="section-title" style="margin-top: 24px;">Invite Friends</div>
+    <div class="referral-card">
+      <div class="referral-title">👥 Invite & Earn More</div>
+      <div class="referral-desc">Earn 10% of your friends' ad revenue — forever.</div>
+      <div class="referral-stats">
+        <div class="ref-stat"><div class="ref-stat-val">14</div><div class="ref-stat-label">Friends</div></div>
+        <div class="ref-stat"><div class="ref-stat-val">$3.20</div><div class="ref-stat-label">Ref Earned</div></div>
+        <div class="ref-stat"><div class="ref-stat-val">10%</div><div class="ref-stat-label">Commission</div></div>
+      </div>
+      <button class="invite-btn" onclick="shareInvite()">🔗 Copy Invite Link</button>
+    </div>
+  </div>
+
+  <!-- ── BONUS PANEL ── -->
+  <div class="panel" id="panel-bonus">
+    <div class="section-title">Daily Mystery Box</div>
+    <div class="mystery-section">
+      <div class="mystery-card">
+        <div class="mystery-title">🎁 Mystery Box</div>
+        <div class="mystery-sub">Scratch 3 boxes · Reset every 24 hours</div>
+
+        <!-- Streak -->
+        <div class="streak-row" id="streakRow"></div>
+
+        <!-- Boxes -->
+        <div class="boxes-grid" id="boxesGrid"></div>
+
+        <div class="mystery-status" id="mysteryStatus">Pick any 3 boxes to reveal your reward!</div>
+        <button class="scratch-btn" id="scratchBtn" onclick="revealAllBoxes()">🎰 Reveal All Boxes</button>
+        <div class="next-reset" id="nextReset">⏱ Resets in: 23:47:12</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── LEADERBOARD PANEL ── -->
+  <div class="panel" id="panel-leaderboard">
+    <div class="section-title">Top Earners</div>
+    <div class="leaderboard-section">
+
+      <!-- Your rank -->
+      <div class="your-rank-card">
+        <div class="your-rank-num">#47</div>
+        <div class="your-rank-info">
+          <div class="your-rank-name">You 🥈</div>
+          <div class="your-rank-sub">Silver Earner · Level 4</div>
+        </div>
+        <div class="your-rank-earn">$12.85</div>
+      </div>
+
+      <!-- Top list -->
+      <div class="lb-list" id="lbList"></div>
+
+    </div>
+  </div>
+
+</div>
+
+<!-- Bottom Nav -->
+<div class="bottom-nav">
+  <div class="nav-item active" onclick="switchNav(this,'tasks')">
+    <div class="nav-icon">🏠</div>HOME
+  </div>
+  <div class="nav-item" onclick="switchNav(this,'bonus')">
+    <div class="nav-icon">🎁</div>BONUS
+  </div>
+  <div class="nav-item" onclick="switchNav(this,'leaderboard')">
+    <div class="nav-icon">🏆</div>RANKS
+  </div>
+  <div class="nav-item" onclick="showToast('👤 Profile page coming soon')">
+    <div class="nav-icon">👤</div>PROFILE
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ── Telegram Init ──
+if (window.Telegram && window.Telegram.WebApp) {
+  const tg = window.Telegram.WebApp;
+  tg.ready(); tg.expand();
+  tg.setHeaderColor('#0a0a0f');
+  const user = tg.initDataUnsafe?.user;
+  if (user) {
+    document.getElementById('userName').textContent = user.first_name || 'You';
+  }
+}
+
+// ── State ──
+let balance = 12.847;
+let todayEarned = 0.342;
+let xp = 340;
+let level = 4;
+const XP_PER_LEVEL = 500;
+
+const RANKS = [
+  { min: 0,    max: 1,  name: 'BRONZE STARTER',   emoji: '🥉', badge: 'LVL 1' },
+  { min: 1,    max: 2,  name: 'BRONZE EARNER',     emoji: '🥉', badge: 'LVL 2' },
+  { min: 2,    max: 3,  name: 'SILVER EARNER',     emoji: '🥈', badge: 'LVL 3' },
+  { min: 3,    max: 5,  name: 'SILVER EARNER',     emoji: '🥈', badge: 'LVL 4' },
+  { min: 5,    max: 7,  name: 'GOLD HUSTLER',      emoji: '🥇', badge: 'LVL 5' },
+  { min: 7,    max: 10, name: 'GOLD HUSTLER',      emoji: '🥇', badge: 'LVL 6' },
+  { min: 10,   max: 15, name: 'DIAMOND EARNER',    emoji: '💎', badge: 'LVL 7' },
+  { min: 15,   max: 999,'name': 'ELITE PUBLISHER', emoji: '👑', badge: 'LVL 8' },
+];
+
+function updateLevel() {
+  const r = RANKS.find(r => level >= r.min && level < r.max) || RANKS[RANKS.length - 1];
+  document.getElementById('levelAvatar').textContent = r.emoji;
+  document.getElementById('userRank').textContent = r.name + ' · LVL ' + level;
+  document.getElementById('levelBadge').textContent = 'LVL ' + level;
+  const pct = (xp / XP_PER_LEVEL) * 100;
+  document.getElementById('xpFill').style.width = pct + '%';
+  document.getElementById('xpLabel').textContent = xp + ' / ' + XP_PER_LEVEL + ' XP';
+}
+
+function gainXP(amount) {
+  xp += amount;
+  if (xp >= XP_PER_LEVEL) {
+    xp -= XP_PER_LEVEL;
+    level++;
+    updateLevel();
+    showToast('🎉 Level Up! You are now Level ' + level + '!');
+    haptic('heavy');
+  } else {
+    updateLevel();
+  }
+}
+
+// ── Live ticker ──
+setInterval(() => {
+  const micro = parseFloat((Math.random() * 0.0004).toFixed(4));
+  balance = parseFloat((balance + micro).toFixed(4));
+  todayEarned = parseFloat((todayEarned + micro).toFixed(4));
+  document.getElementById('balance').textContent = '$' + balance.toFixed(3);
+  document.getElementById('today').textContent = '+$' + todayEarned.toFixed(3);
+}, 3000);
+
+// ── Helpers ──
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2600);
+}
+
+function haptic(type = 'medium') {
+  if (window.Telegram?.WebApp?.HapticFeedback) {
+    window.Telegram.WebApp.HapticFeedback.impactOccurred(type);
+  }
+}
+
+function claimTask(el, reward, xpGain) {
+  if (el.classList.contains('completed')) { showToast('✅ Already completed!'); return; }
+  el.classList.add('completed');
+  el.querySelector('.task-badge').textContent = '✓ DONE';
+  el.querySelector('.task-badge').className = 'task-badge badge-done';
+  balance = parseFloat((balance + reward).toFixed(4));
+  todayEarned = parseFloat((todayEarned + reward).toFixed(4));
+  document.getElementById('balance').textContent = '$' + balance.toFixed(3);
+  document.getElementById('today').textContent = '+$' + todayEarned.toFixed(3);
+  gainXP(xpGain);
+  showToast('🎉 +$' + reward.toFixed(3) + ' & +' + xpGain + ' XP earned!');
+  haptic('medium');
+}
+
+// ── Tab switch ──
+function switchTab(id, el) {
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+  el.classList.add('active');
+  document.getElementById('panel-' + id).classList.add('active');
+}
+
+function switchNav(el, id) {
+  document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
+  el.classList.add('active');
+  // find the tab matching and click it
+  const tabs = document.querySelectorAll('.tab');
+  const map = ['tasks','bonus','leaderboard'];
+  const idx = map.indexOf(id);
+  if (idx !== -1 && tabs[idx]) switchTab(id, tabs[idx]);
+}
+
+// ── Mystery Box ──
+const BOX_PRIZES = [
+  { emoji: '💰', label: '+$0.05', value: 0.05, xp: 20, good: true },
+  { emoji: '💎', label: '+$0.10', value: 0.10, xp: 40, good: true },
+  { emoji: '🚀', label: '+$0.25', value: 0.25, xp: 80, good: true },
+  { emoji: '⭐', label: '+50 XP', value: 0,    xp: 50, good: true },
+  { emoji: '🎯', label: '+$0.03', value: 0.03, xp: 15, good: true },
+  { emoji: '💣', label: 'Miss!',  value: 0,    xp: 5,  good: false },
+  { emoji: '🌟', label: '+$0.08', value: 0.08, xp: 35, good: true },
+  { emoji: '🔥', label: '+$0.15', value: 0.15, xp: 60, good: true },
+  { emoji: '💸', label: '+$0.01', value: 0.01, xp: 8,  good: true },
+];
+
+let boxesOpened = 0;
+let totalBoxReward = 0;
+let boxesDone = false;
+
+function buildBoxes() {
+  const grid = document.getElementById('boxesGrid');
+  grid.innerHTML = '';
+  // shuffle prizes
+  const shuffled = [...BOX_PRIZES].sort(() => Math.random() - 0.5).slice(0,9);
+  shuffled.forEach((prize, i) => {
+    const box = document.createElement('div');
+    box.className = 'mystery-box';
+    box.dataset.prize = JSON.stringify(prize);
+    box.onclick = () => openBox(box);
+    grid.appendChild(box);
+  });
+}
+
+function openBox(box) {
+  if (box.classList.contains('opened') || boxesDone) return;
+  const prize = JSON.parse(box.dataset.prize);
+  box.classList.add('opened');
+  if (!prize.good) box.classList.add('bomb');
+  box.innerHTML = `<div class="box-content"><div class="box-reward">${prize.emoji}</div><div class="box-amount ${prize.good ? '' : 'bad'}">${prize.label}</div></div>`;
+  boxesOpened++;
+
+  if (prize.value > 0) {
+    balance = parseFloat((balance + prize.value).toFixed(4));
+    document.getElementById('balance').textContent = '$' + balance.toFixed(3);
+    totalBoxReward += prize.value;
+  }
+  if (prize.xp > 0) gainXP(prize.xp);
+
+  haptic(prize.good ? 'medium' : 'light');
+
+  const left = 9 - boxesOpened;
+  if (left > 0) {
+    document.getElementById('mysteryStatus').textContent = `✨ ${left} box${left>1?'es':''} remaining…`;
+  } else {
+    boxesDone = true;
+    document.getElementById('mysteryStatus').textContent = `🎊 All done! +$${totalBoxReward.toFixed(3)} total earned!`;
+    document.getElementById('scratchBtn').disabled = true;
+    document.getElementById('scratchBtn').textContent = '✅ All Revealed!';
+    showToast('🎊 Mystery Box complete! +$' + totalBoxReward.toFixed(3));
+  }
+}
+
+function revealAllBoxes() {
+  if (boxesDone) return;
+  document.querySelectorAll('.mystery-box:not(.opened)').forEach(box => openBox(box));
+}
+
+// ── Streak ──
+function buildStreak() {
+  const row = document.getElementById('streakRow');
+  const days = ['M','T','W','T','F','S','S'];
+  const claimedDays = [0,1,2,3]; // Mon-Thu claimed
+  days.forEach((d, i) => {
+    const el = document.createElement('div');
+    el.className = 'streak-day' + (claimedDays.includes(i) ? ' claimed' : '') + (i === 4 ? ' today' : '');
+    el.innerHTML = `<div class="streak-day-num">${d}</div><div>${claimedDays.includes(i) ? '✓' : (i===4?'⚡':'·')}</div>`;
+    row.appendChild(el);
+  });
+}
+
+// ── Leaderboard ──
+const LB_DATA = [
+  { rank: 1,  emoji: '👑', name: 'Alex K.',      level: 8, earn: '$241.30' },
+  { rank: 2,  emoji: '💎', name: 'Maria S.',      level: 7, earn: '$198.70' },
+  { rank: 3,  emoji: '🔥', name: 'Dmitri V.',     level: 7, earn: '$174.20' },
+  { rank: 4,  emoji: '⭐', name: 'Priya M.',      level: 6, earn: '$132.50' },
+  { rank: 5,  emoji: '🚀', name: 'Jake T.',       level: 6, earn: '$118.90' },
+  { rank: 6,  emoji: '💰', name: 'Lena B.',       level: 5, earn: '$97.40'  },
+  { rank: 7,  emoji: '🎯', name: 'Reza A.',       level: 5, earn: '$84.20'  },
+  { rank: 8,  emoji: '🌟', name: 'Sophie L.',     level: 5, earn: '$71.60'  },
+  { rank: 9,  emoji: '⚡', name: 'Carlos M.',     level: 4, earn: '$59.10'  },
+  { rank: 10, emoji: '💫', name: 'Yuki T.',       level: 4, earn: '$47.80'  },
+];
+
+function buildLeaderboard() {
+  const list = document.getElementById('lbList');
+  const medals = ['🥇','🥈','🥉'];
+  const medalClass = ['medal-1','medal-2','medal-3'];
+  LB_DATA.forEach((p, i) => {
+    const el = document.createElement('div');
+    el.className = 'lb-item';
+    el.innerHTML = `
+      <div class="lb-rank ${medalClass[i] || ''}">${i < 3 ? medals[i] : '#'+p.rank}</div>
+      <div class="lb-avatar" style="background: rgba(255,255,255,0.05);">${p.emoji}</div>
+      <div class="lb-name">
+        ${p.name}
+        <div class="lb-level">Level ${p.level}</div>
+      </div>
+      <div class="lb-earn">${p.earn}</div>
+    `;
+    list.appendChild(el);
+  });
+}
+
+// ── Countdown ──
+function updateCountdown() {
+  const now = new Date();
+  const midnight = new Date();
+  midnight.setHours(24,0,0,0);
+  const diff = midnight - now;
+  const h = String(Math.floor(diff/3600000)).padStart(2,'0');
+  const m = String(Math.floor((diff%3600000)/60000)).padStart(2,'0');
+  const s = String(Math.floor((diff%60000)/1000)).padStart(2,'0');
+  document.getElementById('nextReset').textContent = `⏱ Resets in: ${h}:${m}:${s}`;
+}
+
+function shareInvite() {
+  const link = 'https://t.me/myearning_bot?start=ref_user123';
+  if (window.Telegram?.WebApp) {
+    window.Telegram.WebApp.openTelegramLink(`https://t.me/share/url?url=${encodeURIComponent(link)}&text=${encodeURIComponent('🚀 Earn money with Monitag Ads! Join me now!')}`);
+  }
+  showToast('🔗 Invite link copied!');
+}
+
+// ── Init ──
+buildStreak();
+buildBoxes();
+buildLeaderboard();
+updateLevel();
+setInterval(updateCountdown, 1000);
+updateCountdown();
+</script>
+</body>
+</html>
